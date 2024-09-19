@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -72,13 +73,28 @@ func checkSite(url string) {
 
 	if response.StatusCode == 200 {
 		fmt.Println("Site:", url, "was loaded successfully, status code:", response.StatusCode)
+		createLog(url, true)
 	} else {
 		fmt.Println("Site:", url, "faced a issue, status code:", response.StatusCode)
+		createLog(url, false)
 	}
 }
 
 func showLogs() {
 	fmt.Println("Showing logs...")
+	file, error := os.Open("log.txt")
+	if error != nil {
+		fmt.Println(error)
+		return
+	}
+	defer file.Close()
+	reader := bufio.NewScanner(file)
+
+	for reader.Scan() {
+		line := reader.Text()
+		fmt.Println(line)
+		time.Sleep(250 * time.Millisecond)
+	}
 }
 
 func exit() {
@@ -97,4 +113,17 @@ func getInput() int {
 	var option int
 	fmt.Scan(&option)
 	return option
+}
+
+func createLog(url string, status bool) {
+	file, error := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
+	if error != nil {
+		fmt.Println(error)
+		return
+	}
+
+	defer file.Close()
+
+	file.WriteString(time.Now().Format("02/01/2006 15:04:05") + " - " + url + " - online: " + strconv.FormatBool(status) + "\n")
 }
